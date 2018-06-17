@@ -27,8 +27,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -51,6 +53,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Date;
 import java.util.Locale;
+
 import static android.speech.tts.TextToSpeech.ERROR;
 
 
@@ -61,8 +64,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_TAKE_PHOTO = 2222;
     private static final int REQUEST_TAKE_ALBUM = 3333;
     private static final int REQUEST_IMAGE_CROP = 4444;
-
-
 
 
     // ViewDeepResult
@@ -94,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
     //음성출력
     private TextToSpeech tts;
 
+    //비디오뷰
+    VideoView vv;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,22 +111,21 @@ public class MainActivity extends AppCompatActivity {
         //서버전송
         messageText = (TextView) findViewById(R.id.messageText);
         messageText.setText("Uploading file path :- '/mnt/sdcard/" + uploadFileName + "'");
-        upLoadServerUri = "http://222.118.68.81/UploadToServer.php";//서버컴퓨터의 ip주소
+        upLoadServerUri = "http://13.209.75.171/UploadToServer.php";//서버컴퓨터의 ip주소
 
         //txt 표현
 
-        resultText = (TextView)findViewById(R.id.resultText);
+        resultText = (TextView) findViewById(R.id.resultText);
 
 
         btn_capture = (ImageButton) findViewById(R.id.btn_capture);
         btn_album = (ImageButton) findViewById(R.id.btn_album);
 
 
-
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
-                if(status != ERROR) {
+                if (status != ERROR) {
                     // 언어를 선택한다.
                     tts.setLanguage(Locale.ENGLISH);
                 }
@@ -134,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 captureCamera();
-
             }
 
         });
@@ -153,48 +155,62 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void VideoStart() {
+        //비디오뷰
+        vv = (VideoView) findViewById(R.id.videoView);
+
+        MediaController mc = new MediaController(this);
+        vv.setMediaController(mc);
+        String path = uploadFilePath;
+
+
+
+        vv.setVideoPath(path + "Deep.mp4");
+        // VideoView 로 재생할 영상
+        // 아까 동영상 [상세정보] 에서 확인한 경로
+        vv.requestFocus(); // 포커스 얻어오기
+        vv.start(); // 동영상 재생
+    }
 
     public void ExpressTxt() {
 
-            Runnable task = new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        try {
-                            ViewDeepResult();
-                            Thread.sleep(100);
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        ViewDeepResult();
+                        Thread.sleep(100);
 
 
-                            if(inputLine == null) {
+                        if (inputLine == null) {
 
-                            }
-                            else if(!inputLine.equals(inputCheck)) {
-                                resultText.setText(inputLine);
+                        } else if (!inputLine.equals(inputCheck)) {
+                            resultText.setText(inputLine);
 
-                                tts.speak(inputLine.toString(), TextToSpeech.QUEUE_FLUSH, null);
-                                inputCheck = inputLine;
-                                break;
-                            }
-
-                            if(expressCount >= 200) {
-                                expressCount = 0;
-                                break;
-                            }
-
-                            expressCount++;
-
-
-                        } catch (InterruptedException e) {
+                            tts.speak(inputLine.toString(), TextToSpeech.QUEUE_FLUSH, null);
+                            inputCheck = inputLine;
+                            break;
                         }
 
+                        if (expressCount >= 200) {
+                            expressCount = 0;
+                            break;
+                        }
+
+                        expressCount++;
+
+
+                    } catch (InterruptedException e) {
                     }
+
                 }
-            };
-            Thread thread = new Thread(task);
-            thread.start();
+            }
+        };
+        Thread thread = new Thread(task);
+        thread.start();
 
     }
-
 
 
     public void PreExpressTxt() {
@@ -206,9 +222,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         Thread.sleep(100);
                         PreViewDeepResult();
-                            break;
-
-
+                        break;
 
 
                     } catch (InterruptedException e) {
@@ -224,14 +238,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void PreViewDeepResult() {
         try {
-            URL yahoo = new URL("http://222.118.68.81/predictions.txt");
+            URL yahoo = new URL("http://13.209.75.171/predictions.txt");
             DataInputStream dis = new DataInputStream(yahoo.openStream());
             inputCheck = dis.readLine();
             dis.close();
-
-
-
-
 
 
         } catch (MalformedURLException me) {
@@ -244,14 +254,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void ViewDeepResult() {
         try {
-            URL yahoo = new URL("http://222.118.68.81/predictions.txt");
+            URL yahoo = new URL("http://13.209.75.171/predictions.txt");
             DataInputStream dis = new DataInputStream(yahoo.openStream());
             inputLine = dis.readLine();
             dis.close();
-
-
-
-
 
 
         } catch (MalformedURLException me) {
@@ -261,10 +267,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
-
-
-
 
 
     private void captureCamera() {
@@ -373,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         Log.i("REQUEST_TAKE_PHOTO", "OK");
                         galleryAddPic();
-
+                        VideoStart();
 
                     } catch (Exception e) {
                         Log.e("REQUEST_TAKE_PHOTO", e.toString());
@@ -434,11 +436,9 @@ public class MainActivity extends AppCompatActivity {
                         .create()
                         .show();
             } else {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA }, MY_PERMISSION_CAMERA);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_CAMERA);
             }
         }
-
-
 
 
     }
@@ -583,9 +583,7 @@ public class MainActivity extends AppCompatActivity {
                 fileInputStream.close();
                 dos.flush();
                 dos.close();
-
                 ExpressTxt();
-
 
 
             } catch (MalformedURLException ex) {
@@ -615,6 +613,7 @@ public class MainActivity extends AppCompatActivity {
             dialog.dismiss();
             return serverResponseCode;
         } // End else block
+
     }
     //서버전송 끝
 }
